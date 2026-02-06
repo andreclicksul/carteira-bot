@@ -24,4 +24,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          BRAPI_TOKEN: ${{ secrets.BRAPI_TOKEN }}
         run: python update_cotacoes.py
+
