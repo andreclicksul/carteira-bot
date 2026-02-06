@@ -28,7 +28,12 @@ def get_tickers():
 def fetch_price_brapi(ticker: str) -> float:
     url = f"https://brapi.dev/api/quote/{ticker}"
     params = {"token": BRAPI_TOKEN}
-    r = requests.get(url, params=params, timeout=30)
+    r = requests.get(
+        url,
+        params={"token": BRAPI_TOKEN},
+        headers={"Authorization": f"Bearer {BRAPI_TOKEN}", "User-Agent": "Mozilla/5.0"},
+        timeout=30
+    )
 
     if r.status_code != 200:
         raise ValueError(f"BRAPI {r.status_code} {ticker}: {r.text[:200]}")
