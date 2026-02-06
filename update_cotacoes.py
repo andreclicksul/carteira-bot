@@ -42,7 +42,9 @@ def upsert_cotacao(ticker: str, data: str, preco: float, fonte: str = "brapi"):
         json=payload,
         timeout=30,
     )
-    r.raise_for_status()
+    if not r.ok:
+        raise ValueError(f"Supabase {r.status_code}: {r.text}")
+
 
 def main():
     today = dt.date.today().isoformat()
