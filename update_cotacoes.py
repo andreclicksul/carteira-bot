@@ -25,28 +25,26 @@ def get_tickers():
     r.raise_for_status()
     return [row["ticker"] for row in r.json()]
 
-def fetch_price_brapi(ticker: str) -> float:
-    url = f"https://brapi.dev/api/quote/{ticker}"
+def fetch_price_brapi(symbol: str) -> float:
+    url = f"https://brapi.dev/api/quote/{symbol}"
     params = {"token": BRAPI_TOKEN}
-    r = requests.get(
-        url,
-        params={"token": BRAPI_TOKEN},
-        headers={"Authorization": f"Bearer {BRAPI_TOKEN}", "User-Agent": "Mozilla/5.0"},
-        timeout=30
-    )
-
-    if r.status_code != 200:
-        raise ValueError(f"BRAPI {r.status_code} {ticker}: {r.text[:200]}")
+    r = requests.get(url, params=params, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
+    r.raise_for_status()
 
     j = r.json()
     results = j.get("results", [])
     if not results:
-        raise ValueError(f"Sem results na brapi para {ticker}: {j}")
+        raise ValueError(f"Sem results para {symbol}: {j}")
+
     price = results[0].get("regularMarketPrice")
     if price is None:
-        raise ValueError(f"Sem regularMarketPrice na brapi para {ticker}: {results[0]}")
-    return float(price)
+        raise ValueError(f"Sem regularMarketPrice para {symbol}: {results[0]}")
 
+    price = float(price)
+    if price <= 0:
+        raise ValueError(f"Preço inválido ({price}) para {symbol}")
+
+    return price
 
 def upsert_cotacao(ticker: str, data: str, preco: float, fonte: str = "brapi"):
     url = f"{SUPABASE_URL}/rest/v1/cotacoes"
