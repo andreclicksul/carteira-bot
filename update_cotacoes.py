@@ -2,7 +2,7 @@ import os
 import datetime as dt
 import requests
 
-SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
+SUPABASE_URL = os.environ["SUPABASE_URL"].strip().rstrip("/")
 ANON = os.environ["SUPABASE_ANON_KEY"]
 
 headers = {
