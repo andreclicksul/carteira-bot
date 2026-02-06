@@ -13,6 +13,12 @@ supabase_headers = {
     "Content-Type": "application/json",
 }
 
+def get_symbol_map():
+    url = f"{SUPABASE_URL}/rest/v1/ticker_map?select=ticker,brapi_symbol"
+    r = requests.get(url, headers=supabase_headers, timeout=30)
+    r.raise_for_status()
+    return {row["ticker"]: row["brapi_symbol"] for row in r.json()}
+
 def get_tickers():
     url = f"{SUPABASE_URL}/rest/v1/tickers_para_atualizar?select=ticker&ativo=eq.true"
     r = requests.get(url, headers=supabase_headers, timeout=30)
@@ -52,23 +58,27 @@ def upsert_cotacao(ticker: str, data: str, preco: float, fonte: str = "brapi"):
 
 def main():
     today = dt.date.today().isoformat()
-    tickers = get_tickers()
 
+    # 1) lista de tickers ativos no Supabase
+    tickers = get_tickers()
     if not tickers:
         print("Nenhum ticker ativo para atualizar.")
         return
 
+    # 2) mapa opcional ticker -> brapi_symbol (para casos como EGIE3)
+    symbol_map = get_symbol_map()
+
     ok = 0
     for t in tickers:
+        sym = symbol_map.get(t, t)  # se existir mapeamento, usa; senão usa o ticker normal
         try:
-            price = fetch_price_brapi(t)
-            upsert_cotacao(t, today, price, "brapi")
+            price = fetch_price_brapi(sym)
+            upsert_cotacao(t, today, price, "brapi")  # grava sempre com o ticker "oficial" do seu sistema
             ok += 1
-            print(f"OK {t} {price}")
-            # pequeno intervalo para respeitar limites do provedor
-            time.sleep(0.6)
+            print(f"OK {t} ({sym}) {price}")
+            time.sleep(0.6)  # respeitar limites
         except Exception as e:
-            print(f"ERRO {t} {e}")
+            print(f"ERRO {t} ({sym}) {e}")
 
     print(f"Finalizado. OK={ok}/{len(tickers)}")
 
